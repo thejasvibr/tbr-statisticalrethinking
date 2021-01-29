@@ -1,7 +1,6 @@
 # The harm done by tests of significance
-Author: Hauer, Ezra
-Journal: Accident Analysis and Prevention 
-Year: 2004
+
+Reference : [@hauer2004harm]
 
 - The issue is that university education is centred around Null-hypothesis significance tests
 - *'I have written about the paralyzing effect of statistical significance on road safety research a long time ago...However, the road safety research is a constant reminder of the continuing harm done by NHST.'*
