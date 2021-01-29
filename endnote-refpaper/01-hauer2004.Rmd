@@ -1,0 +1,32 @@
+# The harm done by tests of significance
+Author: Hauer, Ezra
+Journal: Accident Analysis and Prevention 
+Year: 2004
+
+- The issue is that university education is centred around Null-hypothesis significance tests
+- *'I have written about the paralyzing effect of statistical significance on road safety research a long time ago...However, the road safety research is a constant reminder of the continuing harm done by NHST.'*
+- *"The harm is that of using sound data to reach unsound conclusioons thereby giving sustenance to non-sensical beliefs."*
+
+## Episode 1: the right-turn-on-red story 
+- At traffic junctions in some countries/cities, a car can turn into the direction of traffic (left/right) even when the traffic light is red. This episode relates to a series of studies which tried to assess whether this practice caused more accidents. 
+- Many studies observed slight increases in accident rates after intersections were converted from 'normal' to 'right-turn-on-red', however they all reported non-significant test results repeatedly.
+- The non-significant results were interpreted to mean no difference.
+- Only after many studies came together, the data could be put together - which pointed at the negative effects of turn-on-red intersections. 
+
+## Episode 2: the safety effect of paving shoulders
+- A 'paved shoulder' is a width of road that is outside the defined lanes. 
+- Adding 2-4 feet of paved shoulder seemed to suggest an overall decrease in various types of accidents. 
+- NHST showed no significant differences, and thus were reported as having no effect
+- *'Once again common sense and statistical ritual point in opposite directions.'*
+- **'The absence of statistical significncce does not mean and should never be taken to mean that 0 is the most likely estimate.'**
+- The lack of significance was taken to mean that there is no effect, which was then used to justify narrower roads. 
+
+## Episode 3: speed limit increases
+- In some states of the USA, the speed limits were increased. A study analysed the association between fatal crashes and speed limit increases in two years: 1987 and 1995.
+- Based on structural equation modelling, the percentage increase of fatal crashes was estimated. 
+- The estimated increase in crashes was reported only for states and years where a significant effect was found. Non-significant effects were reported as having '0' % changes - or *no* change. 
+- The authors state that increasing speed limits led to increased crashes only in some of the states, and not all the states. 
+- Here, Hauer examines the raw data - percentage change +/- RMSE and shows that overall there is a positive mean increase in crash rate across  both 1987 and 1995. 
+- *'However, when good data is passed through the NHST filter, a negative tends to emerge; black turns to  white and white to black'*
+
+
