@@ -1,0 +1,37 @@
+# Assessing uncertainty in physical constants 
+
+Reference : [@henrion1986assessing]
+
+The authors broadly discuss *"..the problem of underestimation of uncertainty."*
+
+## Introduction 
+
+- The uncertainty of a measurement is important to  1) allow comparisons with other 
+measurements 2) quantify the impact it has on derived parameters 3) check its match 
+with theoretical predictions 
+
+- Authors point out examples where actual uncertainty has been grossly underreported by 
+eg. R.A. Milikan's estimate of $e$ (the charge of a single electron), the accuracy of which turned
+out to be at least 3 standard deviations.
+
+- *"A comprehensive assessment of uncertainty cannot rest solely on statistical analysis. Unavoidably, it involves a considerable element of subjective judgment."*
+
+## The psychology of judgment under uncertainty 
+
+- Good estimates of uncertainty can be made by humans when there is training and scope for feedback to improve assessment. 
+- When the conditions aren't right, or training isn't available, it can lead to overconfidence (positing very low uncertainty) or underconfidence (positing very high uncertainty). 
+- Subjective confidence intervals are a common way to assess the uncertainty of a quantity. (eg. 'this carrot has a 98% probability of weighing between 100-200 gm')
+    - When the true quantity falls outside the interval, it is a 'surprise'. A 'surprise index' summarises how often the quantity falls out of the interval. 
+    - If the surprise index in a 98% interval is above 2%, it indicates a general overconfidence, and when it's less than 2%, indicates an underconfidence. 
+- The  'interquartile  index' is another way of measuring uncertainty assessments. 
+    - The interquartile index is the percent of judgments where the quantity lies between the 25-75th %ile.  (ie. How often the true value lies in the in
+interval given by the statment 'This carrot has a 50% chance of weighing 100-200gm ')
+    -  A interquartile index < 50% indicates overconfidence.
+- In general, nonspecialist subjects tend to be somewhat overconfident showing surprise indices between 20-40%, and interquartile indices of 30-40%
+
+## Uncertainty in physical measurement 
+- Measurements are always accompanied by their uncertainty, as std or confidence intervals. 
+- 'Error' and 'uncertainty' are used interchangeably, and the authors argue for their dissociation:
+    - 'error' : the difference between the actual value and the measurement - which *'is generally unknown at the time of measurement'*
+    - 'uncertainty' : the investigator's (subjective?) assessment of the amount of error. 
+- 
