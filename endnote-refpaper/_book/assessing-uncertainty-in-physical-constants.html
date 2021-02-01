@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 3 Assessing uncertainty in physical constants | Statistical Rethinking - Reference paper notes</title>
+  <meta name="description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
+  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 3 Assessing uncertainty in physical constants | Statistical Rethinking - Reference paper notes" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 3 Assessing uncertainty in physical constants | Statistical Rethinking - Reference paper notes" />
+  
+  <meta name="twitter:description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
+  
+
+<meta name="author" content="Thejasvi Beleyur" />
+
+
+<meta name="date" content="2021-02-01" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="the-harm-done-by-tests-of-significance.html"/>
+
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">A Minimal Book Example</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
+<li class="chapter" data-level="2" data-path="the-harm-done-by-tests-of-significance.html"><a href="the-harm-done-by-tests-of-significance.html"><i class="fa fa-check"></i><b>2</b> The harm done by tests of significance</a><ul>
+<li class="chapter" data-level="2.1" data-path="the-harm-done-by-tests-of-significance.html"><a href="the-harm-done-by-tests-of-significance.html#episode-1-the-right-turn-on-red-story"><i class="fa fa-check"></i><b>2.1</b> Episode 1: the right-turn-on-red story</a></li>
+<li class="chapter" data-level="2.2" data-path="the-harm-done-by-tests-of-significance.html"><a href="the-harm-done-by-tests-of-significance.html#episode-2-the-safety-effect-of-paving-shoulders"><i class="fa fa-check"></i><b>2.2</b> Episode 2: the safety effect of paving shoulders</a></li>
+<li class="chapter" data-level="2.3" data-path="the-harm-done-by-tests-of-significance.html"><a href="the-harm-done-by-tests-of-significance.html#episode-3-speed-limit-increases"><i class="fa fa-check"></i><b>2.3</b> Episode 3: speed limit increases</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="assessing-uncertainty-in-physical-constants.html"><a href="assessing-uncertainty-in-physical-constants.html"><i class="fa fa-check"></i><b>3</b> Assessing uncertainty in physical constants</a><ul>
+<li class="chapter" data-level="3.1" data-path="assessing-uncertainty-in-physical-constants.html"><a href="assessing-uncertainty-in-physical-constants.html#introduction-1"><i class="fa fa-check"></i><b>3.1</b> Introduction</a></li>
+<li class="chapter" data-level="3.2" data-path="assessing-uncertainty-in-physical-constants.html"><a href="assessing-uncertainty-in-physical-constants.html#the-psychology-of-judgment-under-uncertainty"><i class="fa fa-check"></i><b>3.2</b> The psychology of judgment under uncertainty</a></li>
+<li class="chapter" data-level="3.3" data-path="assessing-uncertainty-in-physical-constants.html"><a href="assessing-uncertainty-in-physical-constants.html#uncertainty-in-physical-measurement"><i class="fa fa-check"></i><b>3.3</b> Uncertainty in physical measurement</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Statistical Rethinking - Reference paper notes</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="assessing-uncertainty-in-physical-constants" class="section level1">
+<h1><span class="header-section-number">Chapter 3</span> Assessing uncertainty in physical constants</h1>
+<p>Reference : <span class="citation">(Henrion and Fischhoff <a href="#ref-henrion1986assessing">1986</a>)</span></p>
+<p>The authors broadly discuss <em>“..the problem of underestimation of uncertainty.”</em></p>
+<div id="introduction-1" class="section level2">
+<h2><span class="header-section-number">3.1</span> Introduction</h2>
+<ul>
+<li><p>The uncertainty of a measurement is important to 1) allow comparisons with other
+measurements 2) quantify the impact it has on derived parameters 3) check its match
+with theoretical predictions</p></li>
+<li><p>Authors point out examples where actual uncertainty has been grossly underreported by
+eg. R.A. Milikan’s estimate of <span class="math inline">\(e\)</span> (the charge of a single electron), the accuracy of which turned
+out to be at least 3 standard deviations.</p></li>
+<li><p><em>“A comprehensive assessment of uncertainty cannot rest solely on statistical analysis. Unavoidably, it involves a considerable element of subjective judgment.”</em></p></li>
+</ul>
+</div>
+<div id="the-psychology-of-judgment-under-uncertainty" class="section level2">
+<h2><span class="header-section-number">3.2</span> The psychology of judgment under uncertainty</h2>
+<ul>
+<li>Good estimates of uncertainty can be made by humans when there is training and scope for feedback to improve assessment.</li>
+<li>When the conditions aren’t right, or training isn’t available, it can lead to overconfidence (positing very low uncertainty) or underconfidence (positing very high uncertainty).</li>
+<li>Subjective confidence intervals are a common way to assess the uncertainty of a quantity. (eg. ‘this carrot has a 98% probability of weighing between 100-200 gm’)
+<ul>
+<li>When the true quantity falls outside the interval, it is a ‘surprise’. A ‘surprise index’ summarises how often the quantity falls out of the interval.</li>
+<li>If the surprise index in a 98% interval is above 2%, it indicates a general overconfidence, and when it’s less than 2%, indicates an underconfidence.</li>
+</ul></li>
+<li>The ‘interquartile index’ is another way of measuring uncertainty assessments.
+<ul>
+<li>The interquartile index is the percent of judgments where the quantity lies between the 25-75th %ile. (ie. How often the true value lies in the in
+interval given by the statment ‘This carrot has a 50% chance of weighing 100-200gm’)</li>
+<li>A interquartile index &lt; 50% indicates overconfidence.</li>
+</ul></li>
+<li>In general, nonspecialist subjects tend to be somewhat overconfident showing surprise indices between 20-40%, and interquartile indices of 30-40%</li>
+</ul>
+</div>
+<div id="uncertainty-in-physical-measurement" class="section level2">
+<h2><span class="header-section-number">3.3</span> Uncertainty in physical measurement</h2>
+<ul>
+<li>Measurements are always accompanied by their uncertainty, as std or confidence intervals.</li>
+<li>‘Error’ and ‘uncertainty’ are used interchangeably, and the authors argue for their dissociation:
+<ul>
+<li>‘error’ : the difference between the actual value and the measurement - which <em>‘is generally unknown at the time of measurement’</em></li>
+<li>‘uncertainty’ : the investigator’s (subjective?) assessment of the amount of error.</li>
+</ul></li>
+<li></li>
+</ul>
+
+<div id="refs" class="references">
+<div>
+<p>Hauer, Ezra. 2004. “The Harm Done by Tests of Significance.” <em>Accident Analysis &amp; Prevention</em> 36 (3). Elsevier: 495–500.</p>
+</div>
+<div>
+<p>Henrion, Max, and Baruch Fischhoff. 1986. “Assessing Uncertainty in Physical Constants.” <em>American Journal of Physics</em> 54 (9). American Association of Physics Teachers: 791–98.</p>
+</div>
+<div>
+<p>McElreath, Richard. 2020. <em>Statistical Rethinking: A Bayesian Course with Examples in R and Stan</em>. CRC press.</p>
+</div>
+</div>
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-henrion1986assessing">
+<p>Henrion, Max, and Baruch Fischhoff. 1986. “Assessing Uncertainty in Physical Constants.” <em>American Journal of Physics</em> 54 (9). American Association of Physics Teachers: 791–98.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="the-harm-done-by-tests-of-significance.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/rstudio/bookdown-demo/edit/master/02-henrionfischoff1986.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["endrefs-papernotes.pdf", "endrefs-papernotes.epub"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

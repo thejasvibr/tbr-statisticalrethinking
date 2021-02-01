@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 2 The harm done by tests of significance (Hauer 2004) | Statistical Rethinking - Reference paper notes</title>
+  <meta name="description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
+  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 2 The harm done by tests of significance (Hauer 2004) | Statistical Rethinking - Reference paper notes" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
+  <meta name="github-repo" content="rstudio/bookdown-demo" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 2 The harm done by tests of significance (Hauer 2004) | Statistical Rethinking - Reference paper notes" />
+  
+  <meta name="twitter:description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
+  
+
+<meta name="author" content="Thejasvi Beleyur" />
+
+
+<meta name="date" content="2021-01-29" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="index.html"/>
+
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">A Minimal Book Example</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
+<li class="chapter" data-level="2" data-path="the-harm-done-by-tests-of-significance-hauer2004harm.html"><a href="the-harm-done-by-tests-of-significance-hauer2004harm.html"><i class="fa fa-check"></i><b>2</b> The harm done by tests of significance <span class="citation">(Hauer <span>2004</span>)</span></a><ul>
+<li class="chapter" data-level="2.1" data-path="the-harm-done-by-tests-of-significance-hauer2004harm.html"><a href="the-harm-done-by-tests-of-significance-hauer2004harm.html#episode-1-the-right-turn-on-red-story"><i class="fa fa-check"></i><b>2.1</b> Episode 1: the right-turn-on-red story</a></li>
+<li class="chapter" data-level="2.2" data-path="the-harm-done-by-tests-of-significance-hauer2004harm.html"><a href="the-harm-done-by-tests-of-significance-hauer2004harm.html#episode-2-the-safety-effect-of-paving-shoulders"><i class="fa fa-check"></i><b>2.2</b> Episode 2: the safety effect of paving shoulders</a></li>
+<li class="chapter" data-level="2.3" data-path="the-harm-done-by-tests-of-significance-hauer2004harm.html"><a href="the-harm-done-by-tests-of-significance-hauer2004harm.html#episode-3-speed-limit-increases"><i class="fa fa-check"></i><b>2.3</b> Episode 3: speed limit increases</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Statistical Rethinking - Reference paper notes</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="the-harm-done-by-tests-of-significance-hauer2004harm" class="section level1">
+<h1><span class="header-section-number">Chapter 2</span> The harm done by tests of significance <span class="citation">(Hauer <a href="#ref-hauer2004harm">2004</a>)</span></h1>
+<ul>
+<li>The issue is that university education is centred around Null-hypothesis significance tests</li>
+<li><em>‘I have written about the paralyzing effect of statistical significance on road safety research a long time ago…However, the road safety research is a constant reminder of the continuing harm done by NHST.’</em></li>
+<li><em>“The harm is that of using sound data to reach unsound conclusioons thereby giving sustenance to non-sensical beliefs.”</em></li>
+</ul>
+<div id="episode-1-the-right-turn-on-red-story" class="section level2">
+<h2><span class="header-section-number">2.1</span> Episode 1: the right-turn-on-red story</h2>
+<ul>
+<li>At traffic junctions in some countries/cities, a car can turn into the direction of traffic (left/right) even when the traffic light is red. This episode relates to a series of studies which tried to assess whether this practice caused more accidents.</li>
+<li>Many studies observed slight increases in accident rates after intersections were converted from ‘normal’ to ‘right-turn-on-red’, however they all reported non-significant test results repeatedly.</li>
+<li>The non-significant results were interpreted to mean no difference.</li>
+<li>Only after many studies came together, the data could be put together - which pointed at the negative effects of turn-on-red intersections.</li>
+</ul>
+</div>
+<div id="episode-2-the-safety-effect-of-paving-shoulders" class="section level2">
+<h2><span class="header-section-number">2.2</span> Episode 2: the safety effect of paving shoulders</h2>
+<ul>
+<li>A ‘paved shoulder’ is a width of road that is outside the defined lanes.</li>
+<li>Adding 2-4 feet of paved shoulder seemed to suggest an overall decrease in various types of accidents.</li>
+<li>NHST showed no significant differences, and thus were reported as having no effect</li>
+<li><em>‘Once again common sense and statistical ritual point in opposite directions.’</em></li>
+<li><strong>‘The absence of statistical significncce does not mean and should never be taken to mean that 0 is the most likely estimate.’</strong></li>
+<li>The lack of significance was taken to mean that there is no effect, which was then used to justify narrower roads.</li>
+</ul>
+</div>
+<div id="episode-3-speed-limit-increases" class="section level2">
+<h2><span class="header-section-number">2.3</span> Episode 3: speed limit increases</h2>
+<ul>
+<li>In some states of the USA, the speed limits were increased. A study analysed the association between fatal crashes and speed limit increases in two years: 1987 and 1995.</li>
+<li>Based on structural equation modelling, the percentage increase of fatal crashes was estimated.</li>
+<li>The estimated increase in crashes was reported only for states and years where a significant effect was found. Non-significant effects were reported as having ‘0’ % changes - or <em>no</em> change.</li>
+<li>The authors state that increasing speed limits led to increased crashes only in some of the states, and not all the states.</li>
+<li>Here, Hauer examines the raw data - percentage change +/- RMSE and shows that overall there is a positive mean increase in crash rate across both 1987 and 1995.</li>
+<li><em>‘However, when good data is passed through the NHST filter, a negative tends to emerge; black turns to white and white to black’</em></li>
+</ul>
+
+<div id="refs" class="references">
+<div>
+<p>Hauer, Ezra. 2004. “The Harm Done by Tests of Significance.” <em>Accident Analysis &amp; Prevention</em> 36 (3). Elsevier: 495–500.</p>
+</div>
+<div>
+<p>McElreath, Richard. 2020. <em>Statistical Rethinking: A Bayesian Course with Examples in R and Stan</em>. CRC press.</p>
+</div>
+</div>
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-hauer2004harm">
+<p>Hauer, Ezra. 2004. “The Harm Done by Tests of Significance.” <em>Accident Analysis &amp; Prevention</em> 36 (3). Elsevier: 495–500.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="index.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/rstudio/bookdown-demo/edit/master/01-hauer2004.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["endrefs-papernotes.pdf", "endrefs-papernotes.epub"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>
