@@ -32,6 +32,23 @@ interval given by the statment 'This carrot has a 50% chance of weighing 100-200
 ## Uncertainty in physical measurement 
 - Measurements are always accompanied by their uncertainty, as std or confidence intervals. 
 - 'Error' and 'uncertainty' are used interchangeably, and the authors argue for their dissociation:
-    - 'error' : the difference between the actual value and the measurement - which *'is generally unknown at the time of measurement'*
+    - 'error' : the *unknown* difference between the actual value and the measurement - 
     - 'uncertainty' : the investigator's (subjective?) assessment of the amount of error. 
-- 
+- There are also two types of error: 'random' and 'systematic':
+	- Systematic errors come from an underlying bias in the apparatus or theory and the authors suggest this must be assessed by the experimenter subjectively. 
+	- Random error arise from noise in the measurements, and can be reduced by increasing the number of measurements. 
+
+## Measures of calibration 
+
+- *"The sum of squares of the normlized residuals ...should be distributed as the chi-squared sttistic with $N-1$ degrees of freedom"*. Let's just run an example here to  get a feel for what the authors mean. 
+
+```{r,calibmeasures}
+x.i <- sample(seq(4,5,0.2),10,replace=TRUE)
+N = length(x.i)
+sigma.i <- rnorm(N, 0,10)
+h.i <- x.i-mean(x.i)/sigma.i
+
+R.b.sq <- sum(h.i^2)/(N-1)
+R.b <- sqrt(R.b.sq)
+print(R.b)
+```

@@ -9,6 +9,7 @@ import arviz as az
 import matplotlib.pyplot as plt
 import numpy as np 
 import pandas as pd
+import patsy
 import scipy.stats as stats
 import pymc3 as pm
 
@@ -523,6 +524,977 @@ mu_pred = trace_43_thinned["a"] + trace_43_thinned["b"] * (dabove18.weight - dab
 plt.figure()
 plt.plot(d.weight, d.height,'*')
 
+# %% R code 4.65
+# Fitting the height data as a parabolic curve 
+
+d.std_weight = (d.weight-np.mean(d.weight))/np.std(d.weight)
+d.stdweight_sq = d.std_weight**2.0
+
+m_4_65 = pm.Model()
+
+with m_4_65:
+    b1 = pm.Lognormal('b1', mu=0,sd=1)
+    b2 = pm.Normal('b2', mu=0, sd=1)
+    a = pm.Normal('a', mu=178, sd=20)
+    mu_i = pm.Deterministic('mu_i',a + b1*d.std_weight + b2*d.stdweight_sq)
+    #mu_i = a + b1*d.std_weight + b2*d.stdweight_sq
+    sigma = pm.Uniform('sigma', lower=0, upper=50)
+    height = pm.Normal('height',mu=mu_i,sd=sigma, observed=d.height)
+    trace_4_65 = pm.sample(10000,tune=1000)
+
+# now summarise the posterior distbn of the parameters
+trace_4_65df = pm.trace_to_dataframe(trace_4_65)
+az.summary(trace_4_65, kind='stats', hdi_prob=0.89)
+
+# %% Plot the output
+mu_predicted = trace_4_65['mu_i']
+height_pred = pm.sample_posterior_predictive(trace_4_65, 200, m_4_65)
+ax = az.plot_hdi(d.std_weight, mu_predicted, hdi_prob=0.89)
+az.plot_hdi(d.std_weight, height_pred["height"], ax=ax)
+plt.scatter(d.std_weight, d.height, c="C0", alpha=0.3)
+
+
+# %% Cherry blossoms dataset 
+cherry = pd.read_csv('datasets/cherry_blossoms.csv')
+cherry_nona = cherry.dropna(subset=['doy'])
+print(cherry.describe())
+
+# create knot points across the years in the dataset 
+n_knots = 15
+knot_list = np.quantile(cherry_nona.year, np.linspace(0,1,n_knots))
+
+# %% setup the B-spline matrix and form the underlying basis
+# functions 
+
+from patsy import dmatrix
+B = dmatrix(
+    "bs(year, knots=knots, degree=3, include_intercept=True) - 1",
+    {"year": cherry_nona.year.values, "knots": knot_list[1:-1]},
+)
+
+# plot the underlying b splines
+plt.figure()
+ax = plt.subplot(111)
+for i in range(17):
+    ax.plot(cherry_nona.year, (B[:, i]), color="C0")
+ax.set_xlabel("year")
+ax.set_ylabel("basis");
+
+# %% Estimating parameters for the B-splines 
+m4_7 = pm.Model()
+
+with m4_7:
+    a = pm.Normal('a', mu=100, sd=10)
+    w = pm.Normal('w', mu=0, sd=10, shape=B.shape[1])
+    mu = pm.Deterministic('mu', a+pm.math.dot(np.asarray(B, order="F"), w.T))
+    sigma = pm.Exponential('sigma', 1)
+    D = pm.Normal("D", mu, sigma, observed=cherry_nona.doy)
+    trace_m4_7 = pm.sample(10000, tune=1000)
+    
+# %% Plot the estimaated basis functions long with their weights
+_, ax = plt.subplots(1, 1,)
+wp = trace_m4_7[w].mean(0)
+for i in range(17):
+    ax.plot(cherry_nona.year, (wp[i] * B[:, i]), color="C0")
+ax.set_xlim(812, 2015)
+ax.set_ylim(-6, 6);
+
+
+# %% Now, plot 
+ax = az.plot_hdi(cherry_nona.year, trace_m4_7["mu"], color="k")
+ax.plot(cherry_nona.year, cherry_nona.doy, "o", alpha=0.3)
+ax.set_xlabel("year")
+ax.set_ylabel("days in year")
+# also plot the predictive hdpi
+mu_predicted = trace_m4_7['mu']
+doy_pred = pm.sample_posterior_predictive(trace_m4_7,
+                                          samples=200,
+                                          model=m4_7,var_names=['mu','D'])
+ax = az.plot_hdi(cherry_nona.year, doy_pred['mu'], hdi_prob=0.89)
+ax = az.plot_hdi(cherry_nona.year, doy_pred['D'], hdi_prob=0.89)
+
+# %% Chapter 4 Problems
+# 4M1 
+n_sims = 1000
+sigma = np.random.exponential(0.5, n_sims)
+mu = np.random.normal(0,10, n_sims)
+y = np.random.normal(mu, sigma)
+plt.figure()
+plt.plot(y)
+
+# 4M2 
+m_p42 = pm.Model()
+with m_p42:
+    mu = pm.Normal('mu', mu=0, sd=10)
+    sigma = pm.Exponential('sigm', 1)
+    y = pm.Normal('y', mu=mu, sd=sigma, observed=cherry_nona.doy)
+    trace_m_p42 = pm.sample(1000)
+
+
+# %% Problem 4M7
+# Regressing the !Kung San data without standardising the
+# explanatory weight variable. 
+from pymc3 import math 
+
+dabove18['weight_std'] = dabove18.weight-np.mean(dabove18.weight)
+
+m_p4m7 = pm.Model()
+m_p4m7unstd = pm.Model()
+
+with m_p4m7:
+    sigma = pm.Uniform('sigma', lower=0, upper=50)
+    logb = pm.Normal('logb', mu=0, sd=1)
+    a = pm.Normal('a', mu=178, sigma=20)
+    mu = pm.Deterministic('mu',a + math.exp(logb)*(dabove18.weight_std))
+    height = pm.Normal('height', mu=mu, sd=sigma, observed=dabove18.height)    
+    trace_p4m7 = pm.sample()
+trace_p4m7df= pm.trace_to_dataframe(trace_p4m7)
+
+with m_p4m7unstd:
+    sigma = pm.Uniform('sigma', lower=0, upper=50)
+    logb = pm.Normal('logb', mu=0, sd=1)
+    a = pm.Normal('a', mu=178, sigma=20)
+    mu = pm.Deterministic('mu',a + math.exp(logb)*(dabove18.weight))
+    height = pm.Normal('height', mu=mu, sd=sigma, observed=dabove18.height)    
+    trace_p4m7unstd = pm.sample()
+trace_p4m7unstddf= pm.trace_to_dataframe(trace_p4m7unstd)
+
+# %% Comparing the covariance matrices of the standardised and 
+# unstandardised regressions
+
+# the posterior  prediction interval
+post_predint_std = pm.sample_posterior_predictive(trace_p4m7, 200, model=m_p4m7,
+                                                  var_names=['height'])
+post_predint_unstd = pm.sample_posterior_predictive(trace_p4m7unstd, 200,
+                                                    model=m_p4m7unstd,
+                                                  var_names=['height'])
+
+plt.figure()
+plt.subplot(211)
+plt.scatter(dabove18.weight, dabove18.height, alpha=0.4)
+az.plot_hdi(dabove18.weight, trace_p4m7['mu'])
+az.plot_hdi(dabove18.weight, post_predint_std['height'], color='y')
+plt.title('X = standardised weights')
+
+plt.subplot(212)
+plt.scatter(dabove18.weight, dabove18.height, alpha=0.4)
+az.plot_hdi(dabove18.weight, trace_p4m7unstd['mu'], color='r')
+az.plot_hdi(dabove18.weight, post_predint_unstd['height'], color='g')
+plt.title('X = Raw weights')
+
+# The difference in variance covariance matrices:
+
+trace_p4m7df.cov()
+
+# %% Problem 4M8
+# Increase the number of knots used to fit splines in the cherry blossom dataset
+# Also change the width and prior on the weights. 
+
+
+# create knot points across the years in the dataset 
+def fit_bplines(nknots, cherrydata, **kwargs):
+    
+    knot_list = np.quantile(cherrydata.year, np.linspace(0,1,nknots))
+    
+    B = dmatrix(
+        "bs(year, knots=knots, degree=3, include_intercept=True) - 1",
+        {"year": cherrydata.year.values, "knots": knot_list[1:-1]},)
+    # estimating the spline weights
+    spline_model = pm.Model()
+
+    with spline_model:
+        a = pm.Normal('a', mu=kwargs.get('a_muprior',100),
+                           sd=kwargs.get('a_sdprior',10))
+        w = pm.Normal('w', mu=kwargs.get('w_muprior',0),
+                           sd=kwargs.get('w_sdprior',10),
+                                               shape=B.shape[1])
+        mu = pm.Deterministic('mu', 
+                                  a+pm.math.dot(np.asarray(B, order="F"), w.T))
+        sigma = pm.Exponential('sigma', 1)
+        D = pm.Normal("D", mu, sigma, observed=cherrydata.doy)
+        trace_spline = pm.sample(1000, tune=1000)
+
+    return B, trace_spline, spline_model 
+# %% 
+
+weird_aprior = {'w_sdprior':50}
+b_matrix, trace_out, model = fit_bplines(5, cherry_nona, **weird_aprior)
+
+# %% plot the underlying b splines
+plt.figure()
+ax = plt.subplot(111)
+for i in range(b_matrix.shape[1]):
+    ax.plot(cherry_nona.year, np.asarray(b_matrix[:, i]), color="C0")
+ax.set_xlabel("year")
+ax.set_ylabel("basis");
+
+# %% plot the posterior mean 89% CI
+#plt.figure()
+ax = az.plot_hdi(cherry_nona.year, trace_out["mu"], color="k")
+ax.plot(cherry_nona.year, cherry_nona.doy, "o", alpha=0.3)
+ax.set_xlabel("year")
+ax.set_ylabel("days in year")
+# also plot the predictive hdpi
+mu_predicted = trace_out['mu']
+doy_pred = pm.sample_posterior_predictive(trace_out,
+                                          samples=200,
+                                          model=model,var_names=['mu'])
+ax = az.plot_hdi(cherry_nona.year, doy_pred['mu'], hdi_prob=0.89)
+
+# %% Problem 4H1 
+
+obs_weights = pd.DataFrame(data={'weight':[46.95, 43.72, 64.78, 32.59,54.63], 
+                                 'individual':range(1,6)},)
+
+
+# %% Let's re-run the whole regression once more using the above 18 data
+m_geq18 = pm.Model()
+
+with m_geq18:
+    beta = pm.Lognormal('beta', mu=0, tau=1)
+    sigma = pm.Uniform('sigma', lower=0, upper=50)
+    alpha = pm.Normal('alpha', mu=178, sd=20)
+    mean = pm.Deterministic('mean', alpha + beta*dabove18.weight.values)
+    height = pm.Normal('height', mu=mean, sd=sigma, observed = dabove18.height)
+    heights_map = pm.find_MAP()
+    print(heights_map)
+
+# %% 
+obs_weights['expected_height'] = heights_map['alpha'] + heights_map['beta']*obs_weights['weight']
+# sample 10,000 runs with the MAP means + sigma. 
+mean_predn_samples = []
+for i in range(10**3):
+    mean_predn_samples.append(np.random.normal(obs_weights['expected_height'].values,
+                        np.tile(heights_map['sigma'], obs_weights.shape[0])))
+mean_predn_samples = np.concatenate(mean_predn_samples).reshape(10**3,-1)
+hdi_intvl = az.hdi(mean_predn_samples, hdi_prob=0.89)
+obs_weights['interval_89_lower'] = hdi_intvl[:,0]
+obs_weights['interval_89_upperer'] = hdi_intvl[:,1]
+
+# %% Problem 4H2
+
+kids = d[d.age<18]
+
+
+m_le18 = pm.Model()
+with m_le18:
+    beta = pm.Lognormal('beta', mu=0, tau=1)
+    sigma = pm.Uniform('sigma', lower=0, upper=50)
+    alpha = pm.Normal('alpha', mu=178, sd=20)
+    mean = pm.Deterministic('mean', alpha + beta*kids.weight.values)
+    height = pm.Normal('height', mu=mean, sd=sigma, observed = kids.height)
+    heights_map_k = pm.find_MAP()
+    trace_le18 = pm.sample(5000)
+# %% 
+plt.figure()
+plt.plot(kids.weight, kids.height,'*')
+map_fit = heights_map_k['alpha'] + heights_map_k['beta']*kids.weight
+plt.plot(kids.weight, map_fit,'r')
+
+plt.plot(dabove18.weight, dabove18.height,'*')
+map_fit = heights_map['alpha'] + heights_map['beta']*dabove18.weight
+plt.plot(dabove18.weight, map_fit,'g')
+
+# %% 
+# Plot the MAP line, the 89% mean interval and 89% prediction interval s
+plt.figure()
+plt.plot(kids.weight, kids.height,'*')
+#map_fit = heights_map_k['alpha'] + heights_map_k['beta']*kids.weight
+#plt.plot(kids.weight, map_fit,'r')
+
+# generate the 89% prediction interval 
+az.plot_hdi(kids.weight, trace_le18['mean'], hdi_prob=0.97)
+prediction_samples = pm.sample_posterior_predictive(trace_le18,
+                                                    2000,
+                                                    model=m_le18)
+
+az.plot_hdi(kids.weight, prediction_samples['height'], hdi_prob=0.89)
+
+# %% Generating the log-weight vs height estimates
+
+d['logweight'] = np.log10(d.weight)
+
+
+m_all = pm.Model()
+with m_all:
+    beta = pm.Lognormal('beta', mu=0, tau=1)
+    sigma = pm.Uniform('sigma', lower=0, upper=50)
+    alpha = pm.Normal('alpha', mu=178, sd=20)
+    mean = pm.Deterministic('mean', alpha + beta*d.logweight.values)
+    height = pm.Normal('height', mu=mean, sd=sigma, observed = d.height)
+    heights_map_k = pm.find_MAP()
+    trace_all = pm.sample(5000)
+
+# %% plot the 
+plt.figure()
+plt.scatter(d.logweight, d.height)
+#map_fit = heights_map_k['alpha'] + heights_map_k['beta']*kids.weight
+#plt.plot(kids.weight, map_fit,'r')
+
+# generate the 89% prediction interval 
+az.plot_hdi(d.logweight, trace_all['mean'], hdi_prob=0.97)
+prediction_samples = pm.sample_posterior_predictive(trace_all,
+                                                    200,
+                                                    model=m_all)
+
+az.plot_hdi(d.logweight, prediction_samples['height'], hdi_prob=0.97)
+
+# %% Problem 4H4
+# fit the parabolic (quadratic) line to the the whole height vs weight
+# data - using only what you know about weight and height. 
+
+
+num_samples = 1000
+weight = np.linspace(2,100,num_samples)
+weightsq = weight**2
+alpha = np.random.normal(30,20, num_samples)
+beta1 = np.random.uniform(0.001,0.01, num_samples)
+beta2 = np.random.uniform(0.001,0.02, num_samples)
+sigma = np.random.uniform(0,50, num_samples)
+mean = alpha + beta1*weight + beta2*weightsq
+
+plt.figure()
+plt.plot(weight, mean, '*')
+
+# %% 
+# find sensible values of b1 and b2 given the 
+# final heights must be between 0-270cm
+b1_range = np.linspace(0.01,1.0,100)
+b2_range = np.linspace(10**-3,0.025,100)
+
+b1b2 = np.array(np.meshgrid(b1_range, b2_range)).reshape(2,-1).T
+
+def calc_height(inputb, weight=np.linspace(2,100,100)):
+    b1,b2 = inputb
+    return 30 + b1*weight+b2*weight**2
+
+def within_valid_range(allheights):
+    minheight = 30
+    maxheights = 270
+    within_limits = np.logical_and(np.sum(allheights<=minheight*1.5)>1,
+                                   allheights<=maxheights)
+    all_withinlimits = np.all(within_limits)
+    return all_withinlimits
+    
+
+combi_heights = np.apply_along_axis(calc_height, 1, b1b2)
+valid_paramcombis = np.apply_along_axis(within_valid_range, 1, combi_heights)
+print(np.sum(valid_paramcombis))
+sensible_paramcombis = b1b2[valid_paramcombis,:]
+print(np.percentile(sensible_paramcombis[:,0], [0,100]))
+print(np.percentile(sensible_paramcombis[:,1], [0,100]))
+# %% Cherry blossom with time 
+# model doy with march temperature
+
+plt.figure()
+plt.scatter(cherry_nona.temp,cherry_nona.doy)
+
+# %% Let's first do a linear model. 
+# The whole season is between jan-may or doy of 01-150, so let's just assume
+# a uniform distbn here.
+# 
+cherry_nontempna = cherry[['doy','temp']].dropna()
+
+# equation is doy = intercept + alpha*temp
+intcpt = np.random.normal(150,5)
+m = -15
+t = np.linspace(0,10,100)
+doy_sim = intcpt + m*t
+plt.figure()
+plt.scatter(t, doy_sim)
+# %%  Generate some priors
+m_blossom = pm.Model()
+with m_blossom:
+    intcpt = pm.Normal('intcpt',mu=150,sd=5)
+    alpha = pm.Uniform('alpha',lower=-20, upper=-1)
+    mean = pm.Deterministic('mean',intcpt + alpha*cherry_nontempna.temp)
+    sigma = pm.Uniform('sigma',lower=1,upper=10)
+    doy = pm.Normal('doy', mu=mean,sd=sigma, observed=cherry_nontempna.doy)
+    trace_blossom_lm = pm.sample(10000)
+    map_fit = pm.find_MAP()
+
+map_line = map_fit['intcpt']+map_fit['alpha']*cherry_nontempna.temp
+post_predint = pm.sample_posterior_predictive(trace_blossom_lm, 200,m_blossom,var_names=['doy','mean'])
+
+# %% 
+plt.figure()
+plt.scatter(cherry_nontempna.temp, cherry_nontempna.doy)
+plt.plot(cherry_nontempna.temp,map_line)
+az.plot_hdi(cherry_nontempna.temp, post_predint['doy'], hdi_prob=0.89)
+az.plot_hdi(cherry_nontempna.temp, post_predint['mean'], hdi_prob=0.89)
+
+# In general temperature explains some of the variation but not all of it...
+# Many of the data points are spread awy from the mean-prediction *and* the 
+# 89% posterior prediction interval.
+
+# %% What about a parabolic fit? 
+b1, b2 = -3, -1
+blossom_parab = 150 + b1*t + b2*t**2
+plt.figure()
+plt.scatter(t,blossom_parab)
+
+# %%
+cherry_nontempna['t2'] = cherry_nontempna.temp
+m_blossom_parabola = pm.Model()
+with m_blossom_parabola:
+    intcpt = pm.Normal('intcpt',mu=150,sd=5)
+    b1 = pm.Uniform('b1',lower=-20, upper=-1)
+    b2 = pm.Uniform('b2',lower=-2, upper=-0.01)
+    mean = pm.Deterministic('mean',intcpt + b1*cherry_nontempna.temp + b2*cherry_nontempna.t2)
+    sigma = pm.Uniform('sigma',lower=1,upper=10)
+    doy = pm.Normal('doy', mu=mean,sd=sigma, observed=cherry_nontempna.doy)
+    trace_blossom_parab = pm.sample(10000)
+    map_fit2 = pm.find_MAP()
+
+# %% 
+
+map_line_p = map_fit2['intcpt']+map_fit2['b1']*cherry_nontempna.temp+ map_fit2['b2']*cherry_nontempna.t2
+post_predint_p = pm.sample_posterior_predictive(trace_blossom_parab,
+                                              200,
+                                              m_blossom_parabola,
+                                              var_names=['doy','mean'])
+
+# %% 
+plt.figure()
+plt.scatter(cherry_nontempna.temp, cherry_nontempna.doy)
+plt.plot(cherry_nontempna.temp,map_line_p)
+az.plot_hdi(cherry_nontempna.temp, post_predint_p['doy'], hdi_prob=0.89)
+az.plot_hdi(cherry_nontempna.temp, post_predint_p['mean'], hdi_prob=0.89)
+
+# %% 
+plt.figure()
+plt.subplot(311)
+plt.scatter(cherry_nontempna.temp, cherry_nontempna.doy)
+plt.plot(cherry_nontempna.temp,map_line)
+az.plot_hdi(cherry_nontempna.temp, post_predint['doy'], hdi_prob=0.89)
+az.plot_hdi(cherry_nontempna.temp, post_predint['mean'], hdi_prob=0.89)
+plt.xticks([])
+plt.title('linear')
+plt.subplot(312)
+plt.title('parabolic')
+plt.scatter(cherry_nontempna.temp, cherry_nontempna.doy)
+plt.plot(cherry_nontempna.temp,map_line_p)
+az.plot_hdi(cherry_nontempna.temp, post_predint_p['doy'], hdi_prob=0.89)
+az.plot_hdi(cherry_nontempna.temp, post_predint_p['mean'], hdi_prob=0.89)
+
+
+# %% Chapter 5 :
+waffle_div = pd.read_csv('datasets/WaffleDivorce.csv', sep=';')
+def standardise(values):
+    return (values-np.mean(values))/np.std(values)
+
+waffle_div['std_divorce'] = standardise(waffle_div['Divorce'])
+waffle_div['std_marriage'] = standardise(waffle_div['Marriage'])
+waffle_div['std_age'] = standardise(waffle_div['MedianAgeMarriage'])
+
+
+# %% plotting the variables involved
+
+plt.figure()
+plt.subplot(121)
+plt.scatter(waffle_div['std_age'], waffle_div['std_divorce']);
+plt.ylabel('Std. divorce rate');plt.xlabel('Std. Median age of marriage')
+plt.subplot(122)
+plt.scatter(waffle_div['std_marriage'], waffle_div['std_divorce'])
+plt.xlim(-2,2);plt.xlabel('Std. marriage rate')
+# %% Code. 5.3
+m_53 = pm.Model()
+with m_53:
+    sigma = pm.Exponential('sigma',1)
+    bA = pm.Normal('bA', mu=0, sd=0.5)
+    a = pm.Normal('a', mu=0, sd=0.2)
+    mu = pm.Deterministic('mu', a+bA*waffle_div['std_age'])
+    divrate = pm.Normal('divrate', mu=mu, sd=sigma,
+                        observed=waffle_div['std_divorce'])
+    prior_samples = pm.sample_prior_predictive()
+    trac_m53 = pm.sample(2000)
+    map_m53 = pm.find_MAP()
+
+# %%  plot the predictions from the priors:
+plt.figure()
+for a, ba in zip(prior_samples['a'][::10], prior_samples['bA'][::10]):
+    y = a + ba*waffle_div['std_age']
+    plt.plot(waffle_div['std_age'], y)
+
+plt.figure()
+az.plot_hdi(waffle_div['std_age'],prior_samples['divrate'],hdi_prob=0.89)
+az.plot_hdi(waffle_div['std_age'],prior_samples['mu'],hdi_prob=0.89)
+plt.scatter(waffle_div['std_age'], waffle_div['std_divorce'])
+
+# %% plot the predictions from the posterior:
+m53_posterior_pred = pm.sample_posterior_predictive(trac_m53, 200,
+                                                    m_53,
+                                                    var_names=['mu','divrate'])
+plt.figure()
+az.plot_hdi(waffle_div['std_age'],m53_posterior_pred['divrate'],hdi_prob=0.89)
+az.plot_hdi(waffle_div['std_age'],m53_posterior_pred['mu'],hdi_prob=0.89)
+plt.scatter(waffle_div['std_age'], waffle_div['std_divorce'])
+plt.xlabel('Median marriage age, standardised');
+plt.ylabel('Median divorce rate, standardised')
+
+# %% m52 which explains the divorce rate only ysing the marriage rate. 
+m_56 = pm.Model()
+with m_56:
+    sigma = pm.Exponential('sigma',1)
+    bM = pm.Normal('bM', mu=0, sd=2)
+    a = pm.Normal('a', mu=0, sd=0.2)
+    mu = pm.Deterministic('mu', a+bM*waffle_div['std_marriage'])
+    divrate = pm.Normal('divrate', mu=mu, sd=sigma,
+                        observed=waffle_div['std_divorce'])
+    m_56_priorsamples = pm.sample_prior_predictive()
+    trac_m56 = pm.sample(2000)
+    map_m56 = pm.find_MAP()
+
+
+# %% 
+m_56_postsamples = pm.sample_posterior_predictive(trac_m56, 200, m_56,
+                                                  var_names=['mu','divrate'])
+plt.figure()
+az.plot_hdi(waffle_div['std_marriage'],m_56_postsamples['divrate'],hdi_prob=0.89)
+az.plot_hdi(waffle_div['std_marriage'],m_56_postsamples['mu'],hdi_prob=0.89)
+plt.scatter(waffle_div['std_marriage'], waffle_div['std_divorce'])
+plt.xlabel('Median marriage rate, standardised');
+plt.ylabel('Median divorce rate, standardised')
+
+# %% 
+
+from causalgraphicalmodels import CausalGraphicalModel
+import daft
+from theano import shared
+
+
+# Making the DAG -- a bit tricky and somewhat complicated I feeell....
+dag5_1 = CausalGraphicalModel(nodes=["A", "D", "M"], edges=[("A", "D"), ("A", "M"), ("M", "D")])
+pgm = daft.PGM()
+coordinates = {"A": (0, 0), "D": (1, 1), "M": (2, 0)}
+for node in dag5_1.dag.nodes:
+    pgm.add_node(node, node, *coordinates[node])
+for edge in dag5_1.dag.edges:
+    pgm.add_edge(*edge)
+pgm.render()
+# plt.gca().invert_yaxis()
+
+# the second DAG 
+dag5_2 = CausalGraphicalModel(nodes=["A", "D", "M"],
+                              edges=[("A", "D"), ("A", "M")])
+pgm2 = daft.PGM()
+coordinates = {"A": (0, 0), "D": (1, 1), "M": (2, 0)}
+for node in dag5_2.dag.nodes:
+    pgm2.add_node(node, node, *coordinates[node])
+for edge in dag5_2.dag.edges:
+    pgm2.add_edge(*edge)
+pgm2.render()
+
+
+# %% Checking out the posterior predictions 
+
+m_both = pm.Model()
+with m_both:
+    
+    a = pm.Normal('a', mu=0, sd=0.2)
+    bA = pm.Normal('bA', mu=0, sd=0.5)
+    bM = pm.Normal('bM',mu=0, sd=0.5)
+    sigma = pm.Exponential('sigma',1)
+    meandiv_std = pm.Deterministic('meandiv_std',
+                                a+bA*waffle_div['std_age'])+bM*waffle_div['std_marriage']
+    divrate_std = pm.Normal('divrate_std', mu=meandiv_std,
+                         sd=sigma, observed=waffle_div['std_divorce'])
+    trace_mboth = pm.sample(2000)
+# %% 
+postpred_mboth = pm.sample_posterior_predictive(trace_mboth, 2000,
+                                                m_both,
+                                                var_names=['meandiv_std','divrate_std'])
+# %% 
+mean_preds = postpred_mboth['meandiv_std'].mean(axis=0)
+mean_hpd = az.hdi(postpred_mboth['meandiv_std'], 0.89)
+plt.figure()
+plt.plot(waffle_div['std_divorce'],waffle_div['std_divorce'],
+         '--',label='perfect prediction')
+#plt.plot(waffle_div['std_divorce'], mean_preds,'*',label='Mean predicted')
+plt.errorbar(waffle_div['std_divorce'], 
+             mean_preds, 
+             yerr=np.abs(mean_preds-mean_hpd.T),
+             fmt="C0o",label='Mean pred. & 89%ile comp. interval')
+#plt.plot(waffle_div['std_divorce'], mean_preds,'*')
+#az.plot_hdi(waffle_div['std_divorce'], postpred_mboth['div_rate'])
+plt.xlabel('Observed');plt.ylabel('Predicted');
+plt.legend()
+
+# %% Spurious correlation eg. 
+nsamples = 100
+x_real = np.random.normal(size=nsamples)
+x_spur = np.random.normal(loc=x_real, size=nsamples)
+y = np.random.normal(loc=x_real, size=nsamples)
+simdf = pd.DataFrame(data={'y':y,'x_real':x_real, 'x_spur':x_spur})
+
+# let's run the plots 
+plt.figure()
+#plt.plot(simdf['x_real'], simdf['x_spur'],'*')
+plt.plot(simdf['y'], simdf['x_spur'],'*')
+plt.plot(simdf['y'], simdf['x_real'],'*')
+
+# %% 
+m_realspur = pm.Model()
+with m_realspur:
+    b1 = pm.Normal('b1', mu=0, sd=1)
+    b2 = pm.Normal('b2', mu=0, sd=1)
+    a = pm.Normal('a', mu=0, sd=0.25)
+    sigma = pm.Uniform('sigma', lower=0.01, upper=10)
+    y_mean = pm.Deterministic('y_mean', a  + b1*simdf['x_real']+b2*simdf['x_spur'])
+    y_pred = pm.Normal('y_pred', mu=y_mean, sd=sigma, observed=simdf['y'])
+    trace_mrealsp = pm.sample(2000)
+    mrealsp_map = pm.find_MAP()
+    
+# %% Counter-factual analysis
+marriagestd_shared = shared(waffle_div['std_marriage'].values)
+agestd_shared = shared(waffle_div['std_age'].values)
+
+
+m53a = pm.Model()
+with m53a:
+    sigma = pm.Exponential("sigma", 1)
+    bA = pm.Normal("bA", 0, 0.5)
+    bM = pm.Normal("bM", 0, 0.5)
+
+    a = pm.Normal("a", 0, 0.2)
+    mu = pm.Deterministic("mu", a + bA * agestd_shared + bM * marriagestd_shared)
+    divorce = pm.Normal("divorce", 
+                            mu, sigma,
+                            observed=waffle_div['std_divorce'])
+
+    sigma_M = pm.Exponential("sigma_m", 1)
+    bAM = pm.Normal("bAM", 0, 0.5)
+    aM = pm.Normal("aM", 0, 0.2)
+    mu_M = pm.Deterministic("mu_m", aM + bAM * agestd_shared)
+    marriage = pm.Normal("marriage", mu_M, sigma_M, 
+                         observed=marriagestd_shared)
+
+    m53a_trace = pm.sample()
+
+# %% Display summary of the posterior coefficient estimates 
+print(az.summary(az.convert_to_dataset(m53a_trace), kind='stats'))
+
+# %% now simulate a range of standardised median age of marriage
+A_seq = np.linspace(-2, 2, 50)
+A_seq.shape
+
+agestd_shared.set_value(A_seq)
+
+with m53a:
+    m53a_post = pm.sample_posterior_predictive(m53a_trace)
+# %% And now plot the predictions. 
+
+plt.figure()
+plt.subplot(121)
+az.plot_hdi(A_seq, m53a_post['divorce'], 0.89)
+plt.plot(A_seq, m53a_post['divorce'].mean(0))
+plt.ylabel('Counterfactual Divorce')
+#az.plot_hdi(A_seq, m53a_post['mu'], 0.89)
+plt.subplot(122)
+az.plot_hdi(A_seq, m53a_post['marriage'], 0.89)
+plt.plot(A_seq, m53a_post['marriage'].mean(0))
+plt.ylabel('Counterfactual Marriage')
+#az.plot_hdi(A_seq, m53a_post['mu_m'], 0.89)
+plt.xlabel('Manipulated Median marriage age')
+
+# %% 
+# Loading the milk dataset
+milk = pd.read_csv('datasets/milk.csv', sep=';')
+for new_colname, old_colname in zip(['K','N','M'], ['kcal.per.g',
+                                                     'neocortex.perc','mass']):
+    if old_colname != 'mass':
+        milk[new_colname] = standardise(milk[old_colname])
+    else:
+        milk[new_colname] = standardise(np.log(milk[old_colname]))
+
+# %% 
+# Simple regression -- kilocals ~ neocortex size
+all_completerows = ~pd.isna(milk['N'])
+milk_nona = milk[all_completerows]
+
+m55_draft = pm.Model()
+with m55_draft:
+    sigma = pm.Exponential('sigma',1)
+    a = pm.Normal('a', mu=0, sd=0.2)
+    b = pm.Normal('b', mu=0, sd=0.5)
+    mu = pm.Deterministic('mu', a +b*milk_nona['N'])
+    kcal = pm.Normal('kcal', mu=mu, sd=sigma, observed=milk_nona['K'])
+    priortrace_m55drft = pm.sample_prior_predictive(var_names=['kcal'])
+
+# %% 
+plt.figure()
+plt.scatter(milk_nona['N'],milk_nona['K'])
+az.plot_hdi(milk_nona['N'],priortrace_m55drft['kcal'])
+
+# %% Another  simple model: kcal ~ neocortex size
+
+neocort_std = shared(milk_nona['N'].values)
+m55 = pm.Model()
+with m55:
+    sigma = pm.Exponential('sigma',1)
+    a = pm.Normal('a', mu=0, sd=0.2)
+    b = pm.Normal('b', mu=0, sd=0.5)
+    mu = pm.Deterministic('mu', a +b*neocort_std)
+    kcal = pm.Normal('kcal', mu=mu, sd=sigma, observed=milk_nona['K'])
+    trace_m55 = pm.sample()
+
+# %% 
+print(az.summary(trace_m55, var_names=['a','b','sigma']))
+
+# %% Plot posterior prediction
+x =  np.linspace(-2,2,50)
+neocort_std.set_value(x)
+with m55:
+    post_m55 = pm.sample_posterior_predictive(trace_m55, var_names=['mu','kcal'])
+
+# %% 
+mean_mu =  post_m55['mu'].mean(axis=0)
+plt.figure()
+az.plot_hdi(x, post_m55['mu'])
+az.plot_hdi(x, post_m55['kcal'])
+plt.plot(x, mean_mu)
+plt.scatter(milk_nona['N'], milk_nona['K'])
+# %% 
+# The observed data
+plt.figure()
+plt.scatter(milk_nona['N'], milk_nona['K'])
+
+# %% kcal ~ body mass
+
+m56 = pm.Model()
+with m56:
+    sigma = pm.Exponential('sigma',1)
+    a = pm.Normal('a', mu=0, sd=0.2)
+    bM = pm.Normal('bM', mu=0, sd=0.5)
+    mu = pm.Deterministic('mu', a +bM*milk_nona['M'])
+    kcal = pm.Normal('kcal', mu=mu, sd=sigma, observed=milk_nona['K'])
+    trace_m56 = pm.sample()
+
+# %% 
+plt.figure()
+plt.scatter(milk_nona['M'],milk_nona['K'])
+az.plot_hdi(milk_nona['M'],trace_m56['mu'])
+
+# %% kcal ~ neocortex + body-mass
+m57 = pm.Model()
+with m57:
+    sigma = pm.Exponential('sigma',1)
+    a = pm.Normal('a', mu=0, sd=0.2)
+    bN = pm.Normal('bN', mu=0, sd=0.5)
+    bM = pm.Normal('bM', mu=0, sd=0.5)
+    mu = pm.Deterministic('mu', a +bM*milk_nona['M']+bN*milk_nona['N'])
+    kcal = pm.Normal('kcal', mu=mu, sd=sigma, observed=milk_nona['K'])
+    trace_m57 = pm.sample(2000)
+
+# %% 
+plt.figure()
+plt.subplot(211)
+plt.scatter(milk_nona['M'],milk_nona['K'])
+az.plot_hdi(milk_nona['M'],trace_m57['mu'])
+plt.subplot(212)
+plt.scatter(milk_nona['N'],milk_nona['K'])
+az.plot_hdi(milk_nona['N'],trace_m57['mu'])
+
+# %% 
+print(az.summary(trace_m57,var_names=['bM','bN']))
+
+# %% Categorical variables 
+howell = pd.read_csv("datasets/Howell1.csv", delimiter=";")
+print(howell.head())
+
+sex = howell["male"].values
+
+with pm.Model() as m5_8:
+    sigma = pm.Uniform("sigma", 0, 50)
+    mu = pm.Normal("mu", 178, 20, shape=2)
+    height = pm.Normal("height", mu[sex], sigma,
+                               observed=howell["height"])
+    m5_8_trace = pm.sample()
+
+az.summary(m5_8_trace)
+
+
+# %% Now to estimate the mean  for each clade :
+milk_nona["clade_id"] = pd.Categorical(milk_nona["clade"]).codes
+
+
+with pm.Model() as m5_9:
+    sigma = pm.Exponential("sigma", 0.5)
+    mu = pm.Normal("mu", 0, 0.5, shape=milk_nona['clade_id'].max()+1)
+    K = pm.Normal('K', mu[milk_nona['clade_id']], sigma,
+                  observed=milk_nona['K'])
+    m5_9_trace = pm.sample()
+
+print(az.summary(m5_9_trace))
+
+# %% plot the estimate
+az.plot_forest(m5_9_trace, combined=True, var_names=["mu"]);
+
+
+# %% Chapter 6 : 
+
+# R 6.2
+N = 100  # number of individuals
+height = np.random.normal(10, 2, N)  # sim total height of each
+leg_prop = np.random.uniform(0.4, 0.5, N)  # leg as proportion of height
+leg_left = leg_prop * height + np.random.normal(0, 0.02, N)  # sim left leg as proportion + error
+leg_right = leg_prop * height + np.random.normal(0, 0.02, N)  # sim right leg as proportion + error
+
+d = pd.DataFrame(
+    np.vstack([height, leg_left, leg_right]).T,
+    columns=["height", "leg_left", "leg_right"],
+)  # combine into data frame
+
+d.head()
+
+
+# %% the leg example - regression 
+m61 = pm.Model()
+with m61:
+    a = pm.Normal('a',mu=10,sigma=100)
+    b1 = pm.Normal('b1',2,10)
+    b2 = pm.Normal('b2',2,10)
+    sd = pm.Exponential('sd',1)
+    height_mean = a + b1*leg_left + b2*leg_right
+    height = pm.Normal('height',mu=height_mean, sigma=sd, 
+                                               observed = d['height'])
+    m61_trace = pm.sample()
+
+# %% summarise m61
+print(az.summary(m61_trace, var_names=['a','b1','b2']))
+
+
+# %% Plant example
+# number of plants
+N = 100
+# simulate initial heights
+h0 = np.random.normal(10, 2, N)
+# assign treatments and simulate fungus and growth
+treatment = np.repeat([0, 1], N / 2)
+fungus = np.random.binomial(n=1, p=0.5 - treatment * 0.4, size=N)
+h1 = h0 + np.random.normal(5 - 3 * fungus, size=N)
+# compose a clean data frame
+d = pd.DataFrame.from_dict({"h0": h0, "h1": h1, "treatment": treatment, "fungus": fungus})
+
+az.summary(d.to_dict(orient="list"), kind="stats", round_to=2)
+
+# %% 
+m66 = pm.Model()
+with m66:
+    sd = pm.Exponential('sd',1)
+    p = pm.Lognormal('p',0,0.25)
+    mu = p*d.h0
+    h1 = pm.Normal('h1', mu=mu, sigma=sd, observed=d['h1'])
+    # m66_prior = pm.sample_prior_predictive(var_names=['p','h1'])
+    m66_trace = pm.sample(var_names=['h1','p'])
+
+# %%
+plt.figure()
+az.plot_hdi(d.h0,m66_trace['h1'])
+
+# %% the full modell now 
+
+m67 = pm.Model()
+with m67:
+    alpha = pm.Lognormal('alpha',0,0.25)
+    bt = pm.Normal('bt',0,0.5)
+    bf = pm.Normal('bf',0,0.5)
+    sd = pm.Exponential('sd',1)
+    p = alpha + bt*d.treatment + bf*d.fungus
+    mu = p*d.h0
+    h1 = pm.Normal('h1',mu=mu, sigma=sd, observed=d.h1)
+    m67_trace = pm.sample()
+    
+# %% show the summary -- fungus is apparently *reducing* the growth
+print(az.summary(m67_trace))
+
+# %% The plant model without the outcome variable fungus
+
+m68 = pm.Model()
+with m68:
+    alpha = pm.Lognormal('alpha',0,0.25)
+    bt = pm.Normal('bt',0,0.5)
+    sd = pm.Exponential('sd',1)
+    p = alpha + bt*d.treatment 
+    mu = p*d.h0
+    h1 = pm.Normal('h1',mu=mu, sigma=sd, observed=d.h1)
+    m68_trace = pm.sample()
+
+# %% 
+print(az.summary(m68_trace))
+
+# %% happiness simulation
+def inv_logit(x):
+    return np.exp(x) / (1 + np.exp(x))
+
+
+def sim_happiness(N_years=1000, seed=1234):
+    np.random.seed(seed)
+
+    popn = pd.DataFrame(np.zeros((20 * 65, 3)), columns=["age", "happiness", "married"])
+    popn.loc[:, "age"] = np.repeat(np.arange(65), 20)
+    popn.loc[:, "happiness"] = np.repeat(np.linspace(-2, 2, 20), 65)
+    popn.loc[:, "married"] = np.array(popn.loc[:, "married"].values, dtype="bool")
+
+    for i in range(N_years):
+        # age population
+        popn.loc[:, "age"] += 1
+        # replace old folk with new folk
+        ind = popn.age == 65
+        popn.loc[ind, "age"] = 0
+        popn.loc[ind, "married"] = False
+        popn.loc[ind, "happiness"] = np.linspace(-2, 2, 20)
+
+        # do the work
+        elligible = (popn.married == 0) & (popn.age >= 18)
+        marry = np.random.binomial(1, inv_logit(popn.loc[elligible, "happiness"] - 4)) == 1
+        popn.loc[elligible, "married"] = marry
+
+    popn.sort_values("age", inplace=True, ignore_index=True)
+
+    return popn
+
+# %% 
+popn = sim_happiness()
+
+popn_summ = popn.copy()
+popn_summ["married"] = popn_summ["married"].astype(int)  # this is necessary before using az.summary, which doesn't work with boolean columns.
+print(az.summary(popn_summ.to_dict(orient="list"), kind="stats", round_to=2))
+
+# %% Now, let's build the model
+d2 = popn_summ.loc[popn_summ['age']>=18,:]
+d2['stdage'] = (d2.age - d2.age.mean())/np.std(d2.age)
+
+# %% my own naive attempts
+
+m000 = pm.Model()
+with m000:
+    a = pm.Normal('a',0,0.5)
+    b = pm.Normal('b',0,0.5)
+    sd = pm.Uniform('sd',lower=0.01,upper=1)
+    mu_happiness =  a*d2.stdage + b*d2.married
+    happiness = pm.Normal('happiness',mu_happiness,sigma=sd, 
+                          observed=d2.happiness)
+    m00_prior = pm.sample_prior_predictive()
+    m000_trace = pm.sample()
+# %% 
+plt.figure()
+plt.subplot(211)
+plt.scatter(d2.age,d2.happiness)
+az.plot_hdi(d2.age, m00_prior['happiness'])
+plt.subplot(212)
+plt.scatter(d2.married,d2.happiness)
+az.plot_hdi(d2.married, m00_prior['happiness'])
+
+# %% 
+plt.figure()
+plt.subplot(211)
+plt.scatter(d2.age,d2.happiness)
+az.plot_hdi(d2.age, m000_trace['happiness'])
+plt.subplot(212)
+plt.scatter(d2.married,d2.happiness)
+az.plot_hdi(d2.married, m000_trace['happiness'])
 
 
 
+    
